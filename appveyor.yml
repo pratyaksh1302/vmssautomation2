@@ -1,0 +1,39 @@
+﻿#---------------------------------#
+#      environment configuration  #
+#---------------------------------#
+os: Unstable
+version: 1.0.{build}.0
+install:
+  - cinst -y pester
+  - ps: Get-PackageProvider -Name NuGet -Force
+
+#---------------------------------#
+#      build configuration        #
+#---------------------------------#
+
+build: false
+
+#---------------------------------#
+#      test configuration         #
+#---------------------------------#
+
+test_script:
+    - ps: |
+        $testResultsFile = ".\TestsResults.xml"
+        $res = Invoke-Pester -OutputFormat NUnitXml -OutputFile $testResultsFile -PassThru
+        (New-Object 'System.Net.WebClient').UploadFile("https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path $testResultsFile))
+        if ($res.FailedCount -gt 0) {
+            throw "$($res.FailedCount) tests failed."
+        }
+
+#---------------------------------#
+#      deployment configuration   #
+#---------------------------------#
+
+# scripts to run before deployment
+
+#---------------------------------#
+#      after build                #
+#---------------------------------#
+
+# scripts to run after the tests have completed
